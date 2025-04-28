@@ -1,10 +1,15 @@
 package com.internshipt.internships.Service;
 
+import com.internshipt.entity.Model.Application;
+import com.internshipt.entity.Model.Hr;
 import com.internshipt.entity.Model.Internship;
 import com.internshipt.internships.Repository.InternRepo;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class InternshipService {
@@ -13,14 +18,21 @@ public class InternshipService {
     public InternshipService(InternRepo internRepo) {
         this.internRepo = internRepo;
     }
-    public String add_inter(Internship inter) {
+
+    @Transactional
+    public String add_inter(Internship inter, Hr hr) {
         try {
+            inter.setHr(hr);
             internRepo.save(inter);
-            return "Internship added successfully!";
+            internRepo.flush(); // force Hibernate to send to DB immediately
+            return "Internship added Successfully";
         } catch (Exception e) {
+            e.printStackTrace();  // <-- important: shows real cause in console
             return "Error adding internship: " + e.getMessage();
         }
     }
+
+
     public String update_inter(Internship inter, int id) {
         Optional<Internship> intr = internRepo.findById(id);
         if (intr.isPresent()) {
@@ -38,6 +50,9 @@ public class InternshipService {
         } else {
             return "Internship with ID " + id + " not found!";
         }
+    }
+    public List<Internship> getAllInternships() {
+        return internRepo.findAll();
     }
 
 }

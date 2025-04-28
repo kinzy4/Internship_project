@@ -18,20 +18,23 @@ public class UserService {
     public void register(Person person){
         userrepo.save(person);
     }
-    public String login(String email, String password){
-     if(userrepo.findByEmail(email).isPresent()){
-      Person person =userrepo.findByEmail(email).get();
-      if(password.equals(person.getPassword())){
-          return "Login Successfull";
-      }
-      else{
-          return "Password Incorrect";}
-     }
-     else{
-         return "Email Doesn't Exist";}
+    public String login(String email, String password) {
+        Optional<Person> optionalPerson = userrepo.findByEmail(email);
+
+        if (optionalPerson.isPresent()) {
+            Person person = optionalPerson.get();
+            if (password.equals(person.getPassword())) {
+                return "Login Successful"; // ✅ Correct spelling
+            } else {
+                return "Password Incorrect"; // ✅ Matches controller
+            }
+        } else {
+            return "User Not Found"; // ✅ Matches controller
+        }
     }
 
-    }
+
+}
 
 
 

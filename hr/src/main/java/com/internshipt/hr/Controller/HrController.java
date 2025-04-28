@@ -1,14 +1,19 @@
 package com.internshipt.hr.Controller;
 
+import com.internshipt.applications.Service.AppService;
+import com.internshipt.entity.Model.Application;
 import com.internshipt.entity.Model.Hr;
 import com.internshipt.entity.Model.Internship;
 import com.internshipt.entity.Model.Student;
+import com.internshipt.hr.Repository.HrRepo;
 import com.internshipt.hr.Service.HrService;
-import com.internshipt.internships.Service.InternshipService;
+import com.internshipt.internships.Service.*;
 import com.internshipt.users.Model.Person;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 import static com.internshipt.users.Model.Person.Type.hr;
 
@@ -17,12 +22,16 @@ import static com.internshipt.users.Model.Person.Type.hr;
 public class HrController {
     private final HrService hrService;
     private final InternshipService internshipService;
-
-    public HrController(HrService hrService, InternshipService internshipService) {
+    private final HrRepo hrRepo;
+    private final AppService appService;
+    public HrController(HrService hrService, InternshipService internshipService, HrRepo hrRepo, AppService appService) {
         this.hrService = hrService;
 
 
         this.internshipService = internshipService;
+        this.hrRepo = hrRepo;
+
+        this.appService = appService;
     }
     @PutMapping("/updateprofile/{id}")
     public ResponseEntity<String> update_profile(@PathVariable int id, @RequestBody Hr hr){
@@ -45,10 +54,15 @@ public class HrController {
     }
     @PostMapping("/addinternship")
     public ResponseEntity<String> addinternship(@RequestBody Internship inter){
-        
-        internshipService.add_inter(inter);
+
+
+        Hr hr = hrRepo.findById(inter.getHr().getUser_id())
+                .orElseThrow(() -> new RuntimeException("HR not found"));
+
+        internshipService.add_inter(inter, hr);
         return ResponseEntity.ok("Internship added Successfully");
     }
+
 
     @PutMapping("/updateinternship/{id}")
     public ResponseEntity<String> update_internship(@PathVariable int id, @RequestBody Internship inter){
@@ -59,4 +73,39 @@ public class HrController {
             return ResponseEntity.status(404).body(result);
         }
     }
+    @PutMapping("/updatestatus/{id}")
+    public ResponseEntity<String> update_status(@PathVariable int id, @RequestBody Map<String, String> body) {
+        try {
+            String statusValue = body.get("status");
+            Application.Status status = Application.Status.valueOf(statusValue);
+
+           Application application=appService.update_status(id,status);
+
+            if (application == null) {
+                return ResponseEntity.status(404).body("Application not found with ID: " + id);
+            }
+            if (status == Application.Status.Accepted) {
+                String studentEmail = application.getStudent().getEmail();
+                String internshipTitle = application.getInternship().getTitle();
+
+                hrService.sendAcceptanceEmail(studentEmail, internshipTitle);
+            }
+
+
+            else if (status == Application.Status.Rejected) {
+                String studentEmail = application.getStudent().getEmail();
+                String internshipTitle = application.getInternship().getTitle();
+
+                hrService.sendRejectionEmail(studentEmail, internshipTitle);
+            }
+
+            return ResponseEntity.ok("Status updated successfully!");
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Invalid status value provided.");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Internal server error.");
+        }
+    }
+
 }

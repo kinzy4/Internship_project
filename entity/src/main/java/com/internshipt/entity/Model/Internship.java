@@ -95,6 +95,7 @@ public class Internship {
     public void setApplications(Set<Application> applications) {
         this.applications = applications;
     }
+
     public Hr getHr() {
         return hr;
     }

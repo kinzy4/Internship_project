@@ -1,7 +1,6 @@
 package com.internshipt.entity.Model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.internshipt.entity.Model.*;
 import jakarta.persistence.*;
 
 @Entity
@@ -28,9 +27,9 @@ public class Application {
     @JsonBackReference
     private Internship internship;
 
-    @Lob
-    @Column(name = "cv_file", columnDefinition = "LONGBLOB")
-    private byte[] cvFile;
+    // Change cvFile from byte[] to String to store the URL
+    @Column(name = "cv_file_url")
+    private String cvFileUrl;
 
     private String fileType;
 
@@ -64,12 +63,12 @@ public class Application {
         this.internship = internship;
     }
 
-    public byte[] getCvFile() {
-        return cvFile;
+    public String getCvFileUrl() {
+        return cvFileUrl;
     }
 
-    public void setCvFile(byte[] cvFile) {
-        this.cvFile = cvFile;
+    public void setCvFileUrl(String cvFileUrl) {
+        this.cvFileUrl = cvFileUrl;
     }
 
     public String getFileType() {
@@ -88,3 +87,4 @@ public class Application {
         this.status = status;
     }
 }
+
